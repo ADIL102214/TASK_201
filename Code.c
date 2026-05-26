@@ -5,6 +5,8 @@
 #define FALSE 0
 #define TRUE 1
 #define SNAKE_LENGTH 20
+#define WINDOW_HEIGHT 800
+#define WINDOW_WIDTH 1000
 
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
@@ -12,6 +14,7 @@ int gameIsRunning = FALSE;
 SDL_Point snake[SNAKE_LENGTH];
 int xVelocity = 15;
 int yVelocity = 0;
+int blockNumber= 0;
 
 int initialize_window(){
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
@@ -22,8 +25,8 @@ int initialize_window(){
         "Snakko Game",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        1000,
-        800,
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
         0
     );
     if (!window){
@@ -76,12 +79,24 @@ void process_input(){
 }
 
 void update() {
+        if(snake[0].x <= 0 || snake[0].x >= WINDOW_WIDTH || snake[0].y <= 0 || snake[0].y >= WINDOW_HEIGHT){
+        if(blockNumber < SNAKE_LENGTH){
+            snake[blockNumber].x = -50;
+            snake[blockNumber].y = -50;
+            blockNumber++;
+            SDL_Delay(5);
+        }else{
+            gameIsRunning = FALSE;
+        }
+        return;
+    }
     for (int i = SNAKE_LENGTH - 1; i > 0; i--){
         snake[i].x = snake[i - 1].x;
         snake[i].y = snake[i - 1].y;
     }
     snake[0].x += xVelocity;
     snake[0].y += yVelocity;
+
 }
 
 void draw(){
@@ -96,7 +111,7 @@ void draw(){
         }
         SDL_RenderDrawRect(renderer, &body);
     }
-    SDL_RenderPresent(renderer);
+    SDL_RenderPresent(renderer);    
 }
 
 int main(int argc, char *argv[]){
