@@ -4,7 +4,7 @@
 
 #define FALSE 0
 #define TRUE 1
-#define SNAKE_LENGTH 20
+#define SNAKE_LENGTH 10
 #define WINDOW_HEIGHT 800
 #define WINDOW_WIDTH 1000
 
@@ -14,7 +14,7 @@ int gameIsRunning = FALSE;
 SDL_Point snake[SNAKE_LENGTH];
 int xVelocity = 15;
 int yVelocity = 0;
-int blockNumber= 0;
+int blockNumber = 0;
 
 int initialize_window(){
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
@@ -79,7 +79,7 @@ void process_input(){
 }
 
 void update() {
-        if(snake[0].x <= 0 || snake[0].x >= WINDOW_WIDTH || snake[0].y <= 0 || snake[0].y >= WINDOW_HEIGHT){
+    if(snake[0].x <= 0 || snake[0].x >= WINDOW_WIDTH || snake[0].y <= 0 || snake[0].y >= WINDOW_HEIGHT){
         if(blockNumber < SNAKE_LENGTH){
             snake[blockNumber].x = -50;
             snake[blockNumber].y = -50;
@@ -90,13 +90,25 @@ void update() {
         }
         return;
     }
+    for(int i = 1; i < SNAKE_LENGTH; i++){
+        if(snake[0].x == snake[i].x && snake[0].y == snake[i].y){
+            if(blockNumber < SNAKE_LENGTH){
+                snake[blockNumber].x = -50;
+                snake[blockNumber].y = -50;
+                blockNumber++;
+                SDL_Delay(5);
+            }else{
+                gameIsRunning = FALSE;
+            }
+            return;
+        }
+    }
     for (int i = SNAKE_LENGTH - 1; i > 0; i--){
         snake[i].x = snake[i - 1].x;
         snake[i].y = snake[i - 1].y;
     }
     snake[0].x += xVelocity;
     snake[0].y += yVelocity;
-
 }
 
 void draw(){
