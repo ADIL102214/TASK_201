@@ -1,17 +1,19 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <stdlib.h>
+#include<time.h>
 
 #define FALSE 0
 #define TRUE 1
-#define SNAKE_LENGTH 10
 #define WINDOW_HEIGHT 800
 #define WINDOW_WIDTH 1000
 
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 int gameIsRunning = FALSE;
-SDL_Point snake[SNAKE_LENGTH];
+SDL_Point snake[100];
+SDL_Point food;
+int snakeLength = 10;
 int xVelocity = 15;
 int yVelocity = 0;
 int blockNumber = 0;
@@ -42,10 +44,15 @@ int initialize_window(){
 }
 
 void setup_snake(){
-    for(int i = 0; i < SNAKE_LENGTH; i++){
-        snake[i].x = 400 - (i*15);
-        snake[i].y = 400;
+    for(int i = 0; i < snakeLength; i++){
+        snake[i].x = 390 - (i*15);
+        snake[i].y = 390;
     }
+}
+
+void generate_food(){
+    food.x = (rand() % (WINDOW_WIDTH/15)*15);
+    food.y = (rand() % (WINDOW_HEIGHT/15)*15);
 }
 
 void process_input(){
@@ -80,7 +87,7 @@ void process_input(){
 
 void update() {
     if(snake[0].x <= 0 || snake[0].x >= WINDOW_WIDTH || snake[0].y <= 0 || snake[0].y >= WINDOW_HEIGHT){
-        if(blockNumber < SNAKE_LENGTH){
+        if(blockNumber < snakeLength){
             snake[blockNumber].x = -50;
             snake[blockNumber].y = -50;
             blockNumber++;
@@ -90,9 +97,9 @@ void update() {
         }
         return;
     }
-    for(int i = 1; i < SNAKE_LENGTH; i++){
+    for(int i = 1; i < snakeLength; i++){
         if(snake[0].x == snake[i].x && snake[0].y == snake[i].y){
-            if(blockNumber < SNAKE_LENGTH){
+            if(blockNumber < snakeLength){
                 snake[blockNumber].x = -50;
                 snake[blockNumber].y = -50;
                 blockNumber++;
@@ -103,18 +110,26 @@ void update() {
             return;
         }
     }
-    for (int i = SNAKE_LENGTH - 1; i > 0; i--){
+    for (int i = snakeLength - 1; i > 0; i--){
         snake[i].x = snake[i - 1].x;
         snake[i].y = snake[i - 1].y;
     }
     snake[0].x += xVelocity;
     snake[0].y += yVelocity;
+    SDL_Rect head = {snake[0].x, snake[0].y, 10, 10};
+    SDL_Rect foodRect = {food.x, food.y, 10, 10};
+    if(SDL_HasIntersection(&head, &foodRect)){
+        generate_food(); 
+        snake[snakeLength].x = snake[snakeLength - 1].x;
+        snake[snakeLength].y = snake[snakeLength - 1].y;
+        snakeLength++;
+    }
 }
 
 void draw(){
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
-    for (int i = 0; i < SNAKE_LENGTH; i++){
+    for (int i = 0; i < snakeLength; i++){
         SDL_Rect body = {snake[i].x, snake[i].y, 10, 10};
         if (i == 0){
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -123,12 +138,17 @@ void draw(){
         }
         SDL_RenderDrawRect(renderer, &body);
     }
+    SDL_Rect foodRect = {food.x, food.y, 10, 10};
+    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    SDL_RenderFillRect(renderer, &foodRect);
     SDL_RenderPresent(renderer);    
 }
 
 int main(int argc, char *argv[]){
+    srand(time(NULL));
     gameIsRunning = initialize_window();
     setup_snake();
+    generate_food();
     while (gameIsRunning){
         process_input();
         update();
