@@ -2,6 +2,7 @@
 #include <SDL2/SDL.h>
 #include <stdlib.h>
 #include<time.h>
+#include <SDL2/SDL_ttf.h>
 
 #define FALSE 0
 #define TRUE 1
@@ -17,10 +18,15 @@ int snakeLength = 10;
 int xVelocity = 15;
 int yVelocity = 0;
 int blockNumber = 0;
+int score = 0;
 
 int initialize_window(){
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
         fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
+        return FALSE;
+    }
+    if(TTF_Init() == -1){
+        fprintf(stderr, "Error initializing SDL_ttf: %s\n", TTF_GetError());
         return FALSE;
     }
     window = SDL_CreateWindow(
@@ -120,9 +126,26 @@ void update() {
     SDL_Rect foodRect = {food.x, food.y, 10, 10};
     if(SDL_HasIntersection(&head, &foodRect)){
         generate_food(); 
+        score++;
         snake[snakeLength].x = snake[snakeLength - 1].x;
         snake[snakeLength].y = snake[snakeLength - 1].y;
         snakeLength++;
+    }
+}
+
+void render_text(){
+    TTF_Font *font = TTF_OpenFont("PixelBookOut-Regular.ttf", 40);
+    if(font != NULL){
+        char string[15];
+        sprintf(string, "SCORE : %d", score);
+        SDL_Color red = {255, 0, 0, 255};
+        SDL_Surface *surface = TTF_RenderText_Solid(font, string, red);
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_Rect text ={400, 5, surface->w, surface->h};
+        SDL_RenderCopy(renderer, texture, NULL, &text);
+        SDL_FreeSurface(surface);
+        SDL_DestroyTexture(texture);
+        TTF_CloseFont(font);
     }
 }
 
@@ -141,6 +164,7 @@ void draw(){
     SDL_Rect foodRect = {food.x, food.y, 10, 10};
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
     SDL_RenderFillRect(renderer, &foodRect);
+    render_text();
     SDL_RenderPresent(renderer);    
 }
 
@@ -158,5 +182,6 @@ int main(int argc, char *argv[]){
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+    TTF_Quit();
     return 0;
 }
