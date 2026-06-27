@@ -94,7 +94,9 @@ void process_input(){
 }
 
 void update() {
-    if(snake[0].x <= 0 || snake[0].x >= windowWidth || snake[0].y <= 0 || snake[0].y >= windowHeight){
+    SDL_Rect head = {snake[0].x, snake[0].y, 10, 10};
+    SDL_Rect screen = {0, 0, windowWidth, windowHeight};
+    if(!SDL_HasIntersection(&head, &screen)){
         if(blockNumber < snakeLength){
             snake[blockNumber].x = -50;
             snake[blockNumber].y = -50;
@@ -109,7 +111,8 @@ void update() {
         return;
     }
     for(int i = 1; i < snakeLength; i++){
-        if(snake[0].x == snake[i].x && snake[0].y == snake[i].y){
+        SDL_Rect body = {snake[i].x, snake[i].y, 10, 10};
+        if(SDL_HasIntersection(&head, &body)){
             if(blockNumber < snakeLength){
                 snake[blockNumber].x = -50;
                 snake[blockNumber].y = -50;
@@ -130,7 +133,7 @@ void update() {
     }
     snake[0].x += xVelocity;
     snake[0].y += yVelocity;
-    SDL_Rect head = {snake[0].x, snake[0].y, 10, 10};
+    
     SDL_Rect foodRect = {food.x, food.y, 10, 10};
     if(SDL_HasIntersection(&head, &foodRect)){
         generate_food(); 
