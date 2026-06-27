@@ -6,9 +6,9 @@
 
 #define FALSE 0
 #define TRUE 1
-#define WINDOW_HEIGHT 800
-#define WINDOW_WIDTH 1000
 
+int windowHeight = 800;
+int windowWidth = 1000;
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 int gameIsRunning = FALSE;
@@ -19,6 +19,7 @@ int xVelocity = 15;
 int yVelocity = 0;
 int blockNumber = 0;
 int score = 0;
+int finalMessageTime = 0;
 
 int initialize_window(){
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
@@ -33,10 +34,11 @@ int initialize_window(){
         "Snakko Game",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        WINDOW_WIDTH,
-        WINDOW_HEIGHT,
-        0
+        0,
+        0,
+        SDL_WINDOW_FULLSCREEN_DESKTOP
     );
+    SDL_GetWindowSize(window, &windowWidth, &windowHeight);
     if (!window){
         fprintf(stderr, "Error initializing SDL window: %s\n", SDL_GetError());
         return FALSE;
@@ -57,8 +59,8 @@ void setup_snake(){
 }
 
 void generate_food(){
-    food.x = (rand() % (WINDOW_WIDTH/15)*15);
-    food.y = (rand() % (WINDOW_HEIGHT/15)*15);
+    food.x = (rand() % (windowWidth/15)*15);
+    food.y = (rand() % (windowHeight/15)*15);
 }
 
 void process_input(){
@@ -92,14 +94,17 @@ void process_input(){
 }
 
 void update() {
-    if(snake[0].x <= 0 || snake[0].x >= WINDOW_WIDTH || snake[0].y <= 0 || snake[0].y >= WINDOW_HEIGHT){
+    if(snake[0].x <= 0 || snake[0].x >= windowWidth || snake[0].y <= 0 || snake[0].y >= windowHeight){
         if(blockNumber < snakeLength){
             snake[blockNumber].x = -50;
             snake[blockNumber].y = -50;
             blockNumber++;
             SDL_Delay(5);
         }else{
-            gameIsRunning = FALSE;
+            finalMessageTime++;
+            if(finalMessageTime >= 20){
+                gameIsRunning = FALSE;
+            }
         }
         return;
     }
@@ -111,7 +116,10 @@ void update() {
                 blockNumber++;
                 SDL_Delay(5);
             }else{
-                gameIsRunning = FALSE;
+                finalMessageTime++;
+                if(finalMessageTime >= 20){
+                    gameIsRunning = FALSE;
+                }
             }
             return;
         }
@@ -136,15 +144,35 @@ void update() {
 void render_text(){
     TTF_Font *font = TTF_OpenFont("PixelBookOut-Regular.ttf", 40);
     if(font != NULL){
-        char string[15];
-        sprintf(string, "SCORE : %d", score);
         SDL_Color red = {255, 0, 0, 255};
-        SDL_Surface *surface = TTF_RenderText_Solid(font, string, red);
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-        SDL_Rect text ={400, 5, surface->w, surface->h};
-        SDL_RenderCopy(renderer, texture, NULL, &text);
-        SDL_FreeSurface(surface);
-        SDL_DestroyTexture(texture);
+        char string[30];
+        if (snake[snakeLength - 1].x == -50 && snake[snakeLength - 1].y == -50) {
+            TTF_Font *font = TTF_OpenFont("PixelBookOut-Regular.ttf", 60);
+            sprintf(string, "GAME OVER");
+            SDL_Surface *surface1 = TTF_RenderText_Solid(font, string, red);
+            SDL_Texture *texture1 = SDL_CreateTextureFromSurface(renderer, surface1);
+            SDL_Rect text1 = {(windowWidth - surface1->w) / 2, 250, surface1->w, surface1->h};
+            SDL_RenderCopy(renderer, texture1, NULL, &text1);
+            SDL_FreeSurface(surface1);
+            SDL_DestroyTexture(texture1);
+
+            sprintf(string, "FINAL SCORE : %d", score);
+            SDL_Surface *surface2 = TTF_RenderText_Solid(font, string, red);
+            SDL_Texture *texture2 = SDL_CreateTextureFromSurface(renderer, surface2);
+            SDL_Rect text2 = {(windowWidth - surface2->w) / 2, 350, surface2->w, surface2->h};
+            SDL_RenderCopy(renderer, texture2, NULL, &text2);
+            SDL_FreeSurface(surface2);
+            SDL_DestroyTexture(texture2);
+        } 
+        else {
+            sprintf(string, "SCORE : %d", score);
+            SDL_Surface *surface = TTF_RenderText_Solid(font, string, red);
+            SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+            SDL_Rect text = {(windowWidth - surface->w) / 2, 5, surface->w, surface->h};
+            SDL_RenderCopy(renderer, texture, NULL, &text);
+            SDL_FreeSurface(surface);
+            SDL_DestroyTexture(texture);
+        }
         TTF_CloseFont(font);
     }
 }
@@ -161,9 +189,11 @@ void draw(){
         }
         SDL_RenderDrawRect(renderer, &body);
     }
-    SDL_Rect foodRect = {food.x, food.y, 10, 10};
-    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-    SDL_RenderFillRect(renderer, &foodRect);
+    if(!(snake[snakeLength - 1].x == -50 && snake[snakeLength -1].y == -50)){
+        SDL_Rect foodRect = {food.x, food.y, 10, 10};
+        SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+        SDL_RenderFillRect(renderer, &foodRect);
+    }
     render_text();
     SDL_RenderPresent(renderer);    
 }
